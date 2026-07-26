@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 from datetime import datetime
+from hopsworks_setup import get_feature_store, get_or_create_aqi_feature_group, insert_features 
 
 def fetch_aqi_data(latitude, longitude, timezone="auto", past_days=0, forecast_days=1):
 
@@ -107,5 +108,7 @@ def run_feature_pipeline(latitude, longitude, past_days=10, forecast_days=0):
 
 if __name__ == "__main__":
     df = run_feature_pipeline(latitude=27.70, longitude=68.86, past_days=10)
-    print(df.shape)
-    print(df.head())
+    fs = get_feature_store()
+    fg = get_or_create_aqi_feature_group(fs)
+    insert_features(fg, df)
+    print(f"Inserted {len(df)} rows into Hopsworks feature group 'aqi_features'.")
