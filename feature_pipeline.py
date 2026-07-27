@@ -34,6 +34,25 @@ def fetch_aqi_data(latitude, longitude, timezone="auto", past_days=None, forecas
 
     return df
 
+def fetch_weather_archive_data(latitude, longitude, start_date, end_date, timezone="auto"):
+    
+    url = "https://archive-api.open-meteo.com/v1/archive"
+    params = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "hourly": "temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,precipitation",
+        "timezone": timezone,
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+    response = requests.get(url, params=params, timeout=10)
+    if response.status_code != 200:
+        raise Exception(f"Weather archive API request failed: {response.status_code} - {response.text}")
+    data = response.json()
+    df = pd.DataFrame(data["hourly"])
+    df["time"] = pd.to_datetime(df["time"])
+    return df
+
 def fetch_weather_data(latitude, longitude, timezone="auto", past_days=None, forecast_days=None,
                         start_date=None, end_date=None):
     url = "https://api.open-meteo.com/v1/forecast"
