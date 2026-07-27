@@ -3,18 +3,23 @@ import requests
 from datetime import datetime
 from hopsworks_setup import get_feature_store, get_or_create_aqi_feature_group, insert_features 
 
-def fetch_aqi_data(latitude, longitude, timezone="auto", past_days=0, forecast_days=1):
+# Using the Start and end date parameters to fetch historical data from the API.
+def fetch_aqi_data(latitude, longitude, timezone="auto", past_days=None, forecast_days=None, start_date=None, end_date=None):
 
     url = "https://air-quality-api.open-meteo.com/v1/air-quality"
     params = {
         "latitude": latitude,
         "longitude": longitude,
         "hourly": "pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi",
-        "timezone": timezone,
-        "past_days": past_days,
-        "forecast_days": forecast_days,
+        "timezone": timezone
         }
 
+    if start_date and end_date:
+        params["start_date"] = start_date
+        params["end_date"] = end_date
+    else:
+        params["past_days"] = past_days
+        params["forecast_days"] = forecast_days
 
     response = requests.get(url, params=params, timeout=10)
 
@@ -24,14 +29,13 @@ def fetch_aqi_data(latitude, longitude, timezone="auto", past_days=0, forecast_d
     data = response.json()
     df = pd.DataFrame(data['hourly'])
     df["time"] = pd.to_datetime(df["time"])
-
     df["latitude"] = data["latitude"]
     df["longitude"] = data["longitude"]
 
     return df
 
-def fetch_weather_data(latitude, longitude, timezone="auto", past_days=0, forecast_days=1):
-
+def fetch_weather_data(latitude, longitude, timezone="auto", past_days=None, forecast_days=None,
+                        start_date=None, end_date=None):
     url = "https://api.open-meteo.com/v1/forecast"
 
     params = {
@@ -39,9 +43,14 @@ def fetch_weather_data(latitude, longitude, timezone="auto", past_days=0, foreca
         "longitude": longitude,
         "hourly": "temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,precipitation",
         "timezone": timezone,
-        "past_days": past_days,
-        "forecast_days": forecast_days,
     }
+
+    if start_date and end_date:
+        params["start_date"] = start_date
+        params["end_date"] = end_date
+    else:
+        params["past_days"] = past_days
+        params["forecast_days"] = forecast_days
 
     response = requests.get(url, params=params, timeout=10)
     if response.status_code != 200:
