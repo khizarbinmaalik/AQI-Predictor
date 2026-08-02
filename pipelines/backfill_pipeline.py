@@ -1,6 +1,7 @@
 from  datetime import date, timedelta
-from feature_pipeline import fetch_aqi_data, fetch_weather_archive_data, engineer_features, merge_data, add_daily_targets 
-from hopsworks_setup import get_feature_store, get_or_create_aqi_feature_group, insert_features
+from src.fetch_data import fetch_aqi_data, fetch_weather_archive_data 
+from src.feature_engineering import merge_data, engineer_features, add_daily_targets
+from src.hopsworks_setup import get_feature_store, get_or_create_aqi_feature_group, insert_features
 import pandas as pd
 
 def generate_date_chunks(days_back, chunk_size=90, lag_buffer_days=6):
