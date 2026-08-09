@@ -3,10 +3,8 @@ from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 
 from src.evaluation import time_based_split, evaluate_predictions
-from src.config import TEST_SIZE, RANDOM_STATE
+from src.config import TEST_SIZE, RANDOM_STATE, DROP_COLS
 
-TARGET_COLS = ["target_aqi_day1", "target_aqi_day2", "target_aqi_day3"]
-DROP_COLS = ["time", "latitude", "longitude"] + TARGET_COLS
 
 
 def get_feature_columns(df):

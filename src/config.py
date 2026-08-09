@@ -42,3 +42,5 @@ FEATURE_GROUP_EVENT_TIME = "time"
 # --- Training ---
 TEST_SIZE = 0.2
 RANDOM_STATE = 42        # for reproducibility across Ridge/RF/LSTM runs
+TARGET_COLS = ["target_aqi_day1", "target_aqi_day2", "target_aqi_day3"]
+DROP_COLS = ["time", "latitude", "longitude"] + TARGET_COLS
