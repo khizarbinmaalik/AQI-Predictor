@@ -3,13 +3,10 @@ from xgboost import XGBRegressor
 
 from src.evaluation import time_based_split, evaluate_predictions 
 from src.config import TEST_SIZE, RANDOM_STATE, DROP_COLS
+from src.model_utils import get_feature_columns
 
-def get_feature_columns(df):
-    """All columns except identifiers, constants, and targets."""
-    return [c for c in df.columns if c not in DROP_COLS]
-
-def train_gradient_boosting_models(train_df, test_df, n_estimators=1000, learning_rate=0.05):
-    feature_cols = get_feature_columns(train_df)
+def train_gradient_boosting_models(train_df, test_df, n_estimators=1000, learning_rate=0.05, prune_weak=False):
+    feature_cols = get_feature_columns(train_df, prune_weak)
 
     X_train_full = train_df[feature_cols]
     X_test = test_df[feature_cols]

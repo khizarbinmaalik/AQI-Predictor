@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from src.config import LAG_HOURS, TARGET_HORIZONS_DAYS
 
 def merge_data(aqi_df, weather_df):
