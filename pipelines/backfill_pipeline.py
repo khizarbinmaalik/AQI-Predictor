@@ -1,7 +1,8 @@
 from  datetime import date, timedelta
 from src.fetch_data import fetch_aqi_data, fetch_weather_archive_data 
-from src.feature_engineering import merge_data, engineer_features, add_daily_targets
+from src.feature_engineering import merge_data, engineer_features, add_daily_targets,merge_fire_features
 from src.hopsworks_setup import get_feature_store, get_or_create_aqi_feature_group, insert_features
+from src.fire_data_fetch import aggregate_daily_fire_features 
 import pandas as pd
 
 def generate_date_chunks(days_back, chunk_size=90, lag_buffer_days=6):
@@ -35,6 +36,12 @@ def run_year_backfill(latitude, longitude, days_back=365, chunk_size=90):
 
     # Feature engineering runs ONCE on the full concatenated year, not per chunk
     features_df = engineer_features(full_df)
+
+    print("Merging cached fire data (fire_data_raw.csv)...")
+    fire_df = pd.read_csv("fire_data_raw.csv")
+    daily_fire_df = aggregate_daily_fire_features(fire_df)
+    features_df = merge_fire_features(features_df, daily_fire_df)
+
     features_df = add_daily_targets(features_df)
     features_df = features_df.dropna().reset_index(drop=True)
 
