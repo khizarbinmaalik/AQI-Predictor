@@ -6,6 +6,19 @@ def merge_data(aqi_df, weather_df):
     merged = pd.merge(aqi_df, weather_df, on="time", how="inner")
     return merged
 
+
+def merge_fire_features(features_df, daily_fire_df):
+    
+    features_df = features_df.copy()
+    features_df["date"] = features_df["time"].dt.date
+
+    merged = features_df.merge(daily_fire_df, on="date", how="left")
+
+    merged["fire_count"] = merged["fire_count"].fillna(0)
+    merged["fire_frp_sum"] = merged["fire_frp_sum"].fillna(0)
+
+    return merged.drop(columns=["date"])
+
 def engineer_features(df, lag_hours= LAG_HOURS):
 
     df = df.sort_values("time").reset_index(drop=True)

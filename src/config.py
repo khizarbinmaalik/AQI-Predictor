@@ -24,7 +24,7 @@ AIR_QUALITY_HOURLY_VARS = "pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_d
 WEATHER_HOURLY_VARS = "temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,precipitation"
 
 # --- Feature engineering ---
-LAG_HOURS = [1, 3, 24]
+LAG_HOURS = [1, 3, 24, 48, 72]
 TARGET_HORIZONS_DAYS = [1, 2, 3]
 
 # --- Backfill ---
@@ -35,7 +35,7 @@ BACKFILL_LAG_BUFFER_DAYS = 6       # stay clear of ERA5's reporting lag
 # --- Hopsworks ---
 HOPSWORKS_API_KEY = os.getenv("HOPSWORKS_API_KEY")
 FEATURE_GROUP_NAME = "aqi_features"
-FEATURE_GROUP_VERSION = 1
+FEATURE_GROUP_VERSION = 2
 FEATURE_GROUP_PRIMARY_KEY = ["time"]
 FEATURE_GROUP_EVENT_TIME = "time"
 
