@@ -32,6 +32,7 @@ def train_xgboost_delta_models(train_df, test_df, n_estimators=1000, learning_ra
 
     models = {}
     results = {}
+    importances = {}
 
     for horizon in [1, 2, 3]:
         delta_col = f"target_delta_day{horizon}"
@@ -42,19 +43,18 @@ def train_xgboost_delta_models(train_df, test_df, n_estimators=1000, learning_ra
         y_val = y_train_full.iloc[val_split_idx:]
 
         model = XGBRegressor(
-            n_estimators=n_estimators,
-            learning_rate=learning_rate,
+            n_estimators=n_estimators,          
+            learning_rate= learning_rate,
             max_depth=5,
-            subsample=0.8,
+            subsample=1,
             colsample_bytree=0.8,
             random_state=RANDOM_STATE,
-            early_stopping_rounds=30,
+            early_stopping_rounds=20,
             eval_metric="rmse",
             n_jobs=-1,
         )
         model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
 
-        # Predict the DELTA, then reconstruct the actual AQI prediction
         predicted_delta = model.predict(X_test)
         predicted_aqi = test_df["us_aqi"].values + predicted_delta
 
@@ -64,19 +64,17 @@ def train_xgboost_delta_models(train_df, test_df, n_estimators=1000, learning_ra
         )
         models[f"day{horizon}"] = model
 
-    return models, results
+        importances[f"day{horizon}"] = pd.Series(
+            model.feature_importances_, index=feature_cols
+        ).sort_values(ascending=False)
 
+        print(f"  -> stopped at {model.best_iteration} trees (of 1000 max)")
+
+    return models, results, importances
 
 if __name__ == "__main__":
     features_df = pd.read_csv("aqi_features.csv", parse_dates=["time"])
     features_df = add_delta_targets(features_df)
-
     train_df, test_df = time_based_split(features_df, test_size=TEST_SIZE)
 
-    delta_models, delta_results = train_xgboost_delta_models(train_df, test_df)
-
-    print("\n--- Comparison vs. champion (absolute target) ---")
-    champion_r2 = {"day1": 0.523, "day2": 0.169, "day3": 0.020}
-    for horizon_key, champ_r2 in champion_r2.items():
-        delta_r2 = delta_results[horizon_key]["r2"]
-        print(f"{horizon_key}: champion R²={champ_r2:.3f}   delta-model R²={delta_r2:.3f}   gap={delta_r2 - champ_r2:+.3f}")
+    delta_models, delta_results, delta_importances = train_xgboost_delta_models(train_df, test_df)
