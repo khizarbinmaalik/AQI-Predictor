@@ -11,6 +11,7 @@ load_dotenv()
 MAP_KEY = os.getenv("FIRMS_MAP_KEY")
 FIRMS_AREA = "67.4,26.2,70.4,29.2"   
 FIRMS_SOURCE = "VIIRS_SNPP_SP"        
+FIRMS_SOURCE_NRT = "VIIRS_SNPP_NRT"
 FIRMS_MAX_DAY_RANGE = 5               
 
 
