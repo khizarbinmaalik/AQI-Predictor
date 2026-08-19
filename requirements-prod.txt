@@ -1,0 +1,9 @@
+hopsworks==5.0.3
+hopsworks-aiomysql==0.2.2
+hopsworks-apigen==1.0.5
+numpy==2.4.6
+pandas==2.3.3
+python-dotenv==1.2.2
+requests==2.34.2
+scikit-learn==1.9.0
+xgboost==3.4.0

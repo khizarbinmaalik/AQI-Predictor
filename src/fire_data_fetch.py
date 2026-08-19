@@ -58,13 +58,17 @@ def backfill_fire_data(days_back=730, day_range=FIRMS_MAX_DAY_RANGE, sleep_secon
 
 
 def aggregate_daily_fire_features(fire_df, vegetation_only=True):
-    """Aggregates raw fire detections into one row per date."""
+    if fire_df.empty or "type" not in fire_df.columns:
+        return pd.DataFrame(columns=["date", "fire_count", "fire_frp_sum"])
+
     df = fire_df.copy()
     if vegetation_only:
-        df = df[df["type"] == 0]   
+        df = df[df["type"] == 0]
+
+    if df.empty:
+        return pd.DataFrame(columns=["date", "fire_count", "fire_frp_sum"])
 
     df["acq_date"] = pd.to_datetime(df["acq_date"]).dt.date
-
     daily = df.groupby("acq_date").agg(
         fire_count=("frp", "count"),
         fire_frp_sum=("frp", "sum"),
@@ -72,22 +76,35 @@ def aggregate_daily_fire_features(fire_df, vegetation_only=True):
 
     return daily.rename(columns={"acq_date": "date"})
 
-def fetch_recent_fire_data(days_back=10):
+def fetch_recent_fire_data(days_back=10, day_range=FIRMS_MAX_DAY_RANGE):
+
     end = date.today()
     start = end - timedelta(days=days_back)
 
-    url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/{FIRMS_SOURCE_NRT}/{FIRMS_AREA}/{days_back}/{start.isoformat()}"
-    resp = requests.get(url, timeout=15)
+    all_chunks = []
+    current = start
+    while current < end:
+        chunk_str = current.isoformat()
+        url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/{FIRMS_SOURCE_NRT}/{FIRMS_AREA}/{day_range}/{chunk_str}"
+        resp = requests.get(url, timeout=15)
 
-    if resp.status_code != 200:
-        raise Exception(f"FIRMS NRT API request failed: {resp.status_code} - {resp.text}")
+        if resp.status_code != 200:
+            raise Exception(f"FIRMS NRT API request failed: {resp.status_code} - {resp.text}")
 
-    try:
-        df = pd.read_csv(io.StringIO(resp.text))
-    except pd.errors.EmptyDataError:
+        try:
+            chunk_df = pd.read_csv(io.StringIO(resp.text))
+            if len(chunk_df) > 0:
+                all_chunks.append(chunk_df)
+        except pd.errors.EmptyDataError:
+            pass  # a 5-day window with zero fires is a valid result, not an error
+
+        current += timedelta(days=day_range)
+        time.sleep(0.5)
+
+    if not all_chunks:
         return pd.DataFrame(columns=["acq_date", "frp", "type"])
 
-    return df
+    return pd.concat(all_chunks, ignore_index=True)
 
 if __name__ == "__main__":
     fire_df = backfill_fire_data(days_back=730)
