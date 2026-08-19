@@ -58,15 +58,21 @@ def backfill_fire_data(days_back=730, day_range=FIRMS_MAX_DAY_RANGE, sleep_secon
 
 
 def aggregate_daily_fire_features(fire_df, vegetation_only=True):
+    empty_result = pd.DataFrame({
+        "date": pd.Series(dtype="object"),
+        "fire_count": pd.Series(dtype="float64"),
+        "fire_frp_sum": pd.Series(dtype="float64"),
+    })
+
     if fire_df.empty or "type" not in fire_df.columns:
-        return pd.DataFrame(columns=["date", "fire_count", "fire_frp_sum"])
+        return empty_result
 
     df = fire_df.copy()
     if vegetation_only:
         df = df[df["type"] == 0]
 
     if df.empty:
-        return pd.DataFrame(columns=["date", "fire_count", "fire_frp_sum"])
+        return empty_result
 
     df["acq_date"] = pd.to_datetime(df["acq_date"]).dt.date
     daily = df.groupby("acq_date").agg(

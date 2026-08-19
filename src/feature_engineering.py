@@ -8,14 +8,13 @@ def merge_data(aqi_df, weather_df):
 
 
 def merge_fire_features(features_df, daily_fire_df):
-    
     features_df = features_df.copy()
     features_df["date"] = features_df["time"].dt.date
 
     merged = features_df.merge(daily_fire_df, on="date", how="left")
 
-    merged["fire_count"] = merged["fire_count"].fillna(0)
-    merged["fire_frp_sum"] = merged["fire_frp_sum"].fillna(0)
+    merged["fire_count"] = merged["fire_count"].fillna(0).astype("float64")
+    merged["fire_frp_sum"] = merged["fire_frp_sum"].fillna(0).astype("float64")
 
     return merged.drop(columns=["date"])
 

@@ -1,5 +1,5 @@
-from fire_data_fetch import aggregate_daily_fire_features, fetch_recent_fire_data
-from src.hopsworks_setup import get_feature_store, get_or_create_aqi_feature_group, insert_features 
+from src.fire_data_fetch import aggregate_daily_fire_features, fetch_recent_fire_data
+from src.hopsworks_setup import calculate_required_past_days, get_feature_store, get_or_create_aqi_feature_group, insert_features 
 from src.fetch_data import fetch_aqi_data, fetch_weather_data
 from src.feature_engineering import merge_data, engineer_features, add_daily_targets, merge_fire_features
 
@@ -20,8 +20,14 @@ def run_feature_pipeline(latitude, longitude, past_days=10, forecast_days=0):
     return features_df
 
 if __name__ == "__main__":
-    df = run_feature_pipeline(latitude=27.70, longitude=68.86, past_days=10)
     fs = get_feature_store()
     fg = get_or_create_aqi_feature_group(fs)
+
+    past_days = calculate_required_past_days(fg)
+    print(f"Fetching {past_days} days to ensure no gap since last run...")
+
+    df = run_feature_pipeline(latitude=27.70, longitude=68.86, past_days=past_days)
+    print(f"Fetched {len(df)} rows")
+
     insert_features(fg, df)
     print(f"Inserted {len(df)} rows into Hopsworks feature group 'aqi_features'.")
