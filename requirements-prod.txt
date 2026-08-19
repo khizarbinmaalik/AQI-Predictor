@@ -1,4 +1,4 @@
-hopsworks==5.0.3
+hopsworks[python]
 hopsworks-aiomysql==0.2.2
 hopsworks-apigen==1.0.5
 numpy==2.4.6
