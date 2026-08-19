@@ -5,12 +5,28 @@ import pandas as pd
 import hopsworks
 
 from src.evaluation import time_based_split
-from src.config import TEST_SIZE, HOPSWORKS_API_KEY
+from src.config import TEST_SIZE, HOPSWORKS_API_KEY, FEATURE_GROUP_NAME, FEATURE_GROUP_VERSION
+from src.hopsworks_setup import get_feature_store
 from training.train_xgboost_delta import add_delta_targets, get_delta_feature_columns, train_xgboost_delta_models
 
 MODEL_DIR = "model_artifacts"
 MODEL_NAME = "aqi_xgboost_delta"
 
+def load_training_data():
+    """Pulls the current feature set from Hopsworks — the actual source of
+    truth, updated hourly by feature_pipeline.py. NEVER read from a local
+    CSV here: it won't exist in a fresh CI checkout, and even locally it's
+    a disposable cache that can drift out of sync."""
+    fs = get_feature_store()
+    fg = fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
+
+    df = fg.read()
+    df = df.sort_values("time").reset_index(drop=True)  # never trust storage order
+
+    print(f"Loaded {len(df)} rows from Hopsworks ({FEATURE_GROUP_NAME} v{FEATURE_GROUP_VERSION})")
+    print(f"Date range: {df['time'].min()} to {df['time'].max()}")
+
+    return df
 
 def save_model_artifacts(models, feature_cols, results):
     os.makedirs(MODEL_DIR, exist_ok=True)
@@ -79,7 +95,7 @@ def register_model(results, feature_cols, train_df):
 
 
 if __name__ == "__main__":
-    features_df = pd.read_csv("aqi_features.csv", parse_dates=["time"])
+    features_df = load_training_data()
     features_df = add_delta_targets(features_df)
     train_df, test_df = time_based_split(features_df, test_size=TEST_SIZE)
 
